@@ -1,0 +1,2 @@
+FROM coreos-assembler:master
+ENTRYPOINT ["/usr/bin/dumb-init", "sleep", "infinity"]
