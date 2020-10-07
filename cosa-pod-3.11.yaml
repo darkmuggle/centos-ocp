@@ -1,0 +1,75 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  app: COSA-Pod-ephemeral
+  template: COSA-Pod-ephemeral-template
+metadata:
+  annotations:
+    openshift.io/display-name: COSA Pod (Ephemeral)
+  name: COSA-Pod-ephemeral
+objects:
+
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      template.alpha.openshift.io/wait-for-ready: "true"
+    name: ${COSA_POD_NAME}
+  spec:
+    replicas: 1
+    selector:
+      name: ${COSA_POD_NAME}
+    strategy:
+      type: Recreate
+    template:
+      metadata:
+        labels:
+          name: ${COSA_POD_NAME}
+      spec:
+        containers:
+        - args:
+            - /bin/bash
+            - -c
+            - "chmod 0666 /dev/kvm; exec sleep infinity"
+          command:
+            - /usr/bin/dumb-init
+          image: coreos-assembler:${IMAGE_TAG}
+          imagePullPolicy: IfNotPresent
+          name: ${COSA_POD_NAME}
+          securityContext:
+            runAsUser: 0
+            runAsGroup: 1000
+            privileged: true
+          tty: true
+          resources:
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+            requests:
+              memory: "4Gi"
+              cpu: "2000m"
+          volumeMounts:
+          - mountPath: /srv
+            name: srv
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        volumes:
+        - name: srv
+          emptyDir:
+            medium: ""
+        serviceAccount: jenkins-kvm
+        serviceAccountName: jenkins-kvm
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 1000
+          privileged: true
+
+parameters:
+- description: The COSA Pod Name
+  displayName: COSA Pod Service Name
+  name: COSA_POD_NAME
+  value: cosa-podder
+- description: Tag of the COSA image
+  displayName: COSA Image Tag to use
+  name: IMAGE_TAG
+  value: local-master
