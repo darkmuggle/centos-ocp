@@ -7,7 +7,40 @@ metadata:
   annotations:
     openshift.io/display-name: COSA Pod (Ephemeral)
   name: COSA-Pod-ephemeral
+
 objects:
+
+- apiVersion: v1
+  kind: ServiceAccount
+  metadata:
+    annotations:
+       serviceacounts.coreos.com/account: 'secrets'
+    name: ${SA}
+
+- apiVersion: authorization.openshift.io/v1
+  kind: Role
+  metadata:
+    name: ${SA}_Secrets
+  rules:
+  - apiGroups:
+    - ""
+    resources:
+    - secrets
+    verbs:
+    - watch
+    - get
+    - list
+
+- apiVersion: v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    name: ${SA}_Secrets
+  roleRef:
+    name: edit
+  subjects:
+  - kind: ServiceAccount
+    name: ${SA}
 
 - apiVersion: v1
   kind: DeploymentConfig
@@ -27,8 +60,16 @@ objects:
           name: ${COSA_POD_NAME}
       spec:
         containers:
-        - capabilities: {}
-          image: 'coreos-assembler:podder'
+        - env:
+          - name: OC_BIN_URL
+            value: "https://mirror.openshift.com/pub/openshift-v4/clients/oc/4.5/linux/oc.tar.gz"
+          args:
+            - /bin/bash
+            - -c
+            - '(cd /tmp; curl $OC_BIN_URL -O; tar -C /srv -xvvf oc.tar.gz); /srv/oc login ${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT} --token=$(< /var/run/secrets/kubernetes.io/serviceaccount/token) --certificate-authority /var/run/secrets/kubernetes.io/serviceaccount/ca.crt;  exec sleep infinity'
+          command:
+            - /usr/bin/dumb-init
+          image: coreos-assembler:buildconfig-master
           imagePullPolicy: IfNotPresent
           name: ${COSA_POD_NAME}
           resources:
@@ -45,6 +86,7 @@ objects:
             name: srv
         dnsPolicy: ClusterFirst
         restartPolicy: Always
+        serviceAccountName: ${SA}
         volumes:
         - name: srv
           emptyDir:
@@ -55,3 +97,8 @@ parameters:
   displayName: COSA Pod Service Name
   name: COSA_POD_NAME
   value: cosa-podder
+
+- description: Service Account
+  name: SA
+  value: cosa-podder
+
