@@ -98,6 +98,15 @@ objects:
           runAsUser: 0
           runAsGroup: 1000
           privileged: true
+        triggers:
+        - type: "ImageChange"
+          imageChangeParams:
+            automatic: true
+            from:
+              kind: "ImageStreamTag"
+              name: "coreos-assembler:${IMAGE_TAG}"
+            containerNames:
+              - "${COSA_POD_NAME}"
 
 parameters:
 - description: The COSA Pod Name
