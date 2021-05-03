@@ -13,6 +13,10 @@ image: apply
 dev: yaml = cosa-dev.yaml
 dev: apply
 
+.PHONY: poddie
+poddie: yaml = cosa-poddie.yaml
+poddie: apply
+
 .PHONY: podder
 podder: yaml = cosa-pod.yaml
 podder: apply

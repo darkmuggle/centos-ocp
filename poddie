@@ -1,0 +1,5 @@
+#!/bin/bash
+set -x
+args="${@:-shell}"
+pod=$(oc4 get pods -l=name=${PODDER:-cosa-podder} --template='{{range .items}}{{.metadata.name}}{{"\n"}}{{end}}')
+exec oc4 exec ${pod} -t -i -- /usr/bin/coreos-assembler ${args}

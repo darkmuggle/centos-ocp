@@ -1,0 +1,65 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  app: COSA-Pod-ephemeral
+  template: COSA-Pod-ephemeral-template
+metadata:
+  annotations:
+    openshift.io/display-name: COSA Pod (Ephemeral)
+  name: COSA-Pod-ephemeral
+
+objects:
+- apiVersion: v1
+  kind: Pod
+  metadata:
+    name: cosa-podder
+    selector:
+      name: cosa-podder
+    strategy:
+      type: Recreate
+    labels:
+      name: cosa-podder
+  spec:
+   containers:
+    - env:
+      - name: OC_BIN_URL
+        value: "https://mirror.openshift.com/pub/openshift-v4/clients/oc/4.5/linux/oc.tar.gz"
+      args:
+        - /bin/bash
+        - -c
+        - '(cd /tmp; curl $OC_BIN_URL -O; tar -C /srv -xvvf oc.tar.gz); /srv/oc login ${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT} --token=$(< /var/run/secrets/kubernetes.io/serviceaccount/token) --certificate-authority /var/run/secrets/kubernetes.io/serviceaccount/ca.crt;  exec sleep infinity'
+      command:
+        - /usr/bin/dumb-init
+      image: coreos-assembler:bc-dev
+      imagePullPolicy: IfNotPresent
+      name: ${COSA_POD_NAME}
+      resources:
+        limits:
+          memory: "4Gi"
+          cpu: "2000m"
+          devices.kubevirt.io/kvm: "1"
+        requests:
+          memory: "4Gi"
+          cpu: "2000m"
+          devices.kubevirt.io/kvm: "1"
+      volumeMounts:
+      - mountPath: /srv
+        name: srv
+   dnsPolicy: ClusterFirst
+   restartPolicy: Always
+   serviceAccountName: ${SA}
+   volumes:
+    - name: srv
+      emptyDir:
+        medium: ""
+
+parameters:
+- description: The COSA Pod Name
+  displayName: COSA Pod Service Name
+  name: COSA_POD_NAME
+  value: cosa-podder
+
+- description: Service Account
+  name: SA
+  value: jenkins
+

@@ -17,26 +17,13 @@ objects:
        serviceacounts.coreos.com/account: 'secrets'
     name: ${SA}
 
-- apiVersion: authorization.openshift.io/v1
-  kind: Role
-  metadata:
-    name: ${SA}_Secrets
-  rules:
-  - apiGroups:
-    - ""
-    resources:
-    - secrets
-    verbs:
-    - watch
-    - get
-    - list
-
-- apiVersion: v1
-  groupNames: null
+- apiVersion: rbac.authorization.k8s.io/v1
   kind: RoleBinding
   metadata:
-    name: ${SA}_Secrets
+    name: coreos-builder-editor-0
   roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
     name: edit
   subjects:
   - kind: ServiceAccount
@@ -69,7 +56,7 @@ objects:
             - '(cd /tmp; curl $OC_BIN_URL -O; tar -C /srv -xvvf oc.tar.gz); /srv/oc login ${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT} --token=$(< /var/run/secrets/kubernetes.io/serviceaccount/token) --certificate-authority /var/run/secrets/kubernetes.io/serviceaccount/ca.crt;  exec sleep infinity'
           command:
             - /usr/bin/dumb-init
-          image: coreos-assembler:buildconfig-master
+          image: coreos-assembler:${IMAGE_TAG}
           imagePullPolicy: IfNotPresent
           name: ${COSA_POD_NAME}
           resources:
@@ -91,6 +78,15 @@ objects:
         - name: srv
           emptyDir:
             medium: ""
+        triggers:
+          - type: "ImageChange"
+            imageChangeParams:
+              automatic: true
+              containerNames:
+              - "${COSA_POD_NAME}"
+              from:
+                kind: "ImageStreamTag"
+                name: "coreos-assembler:${IMAGE_TAG}"
 
 parameters:
 - description: The COSA Pod Name
@@ -101,4 +97,8 @@ parameters:
 - description: Service Account
   name: SA
   value: cosa-podder
+
+- description: Image tag
+  name: IMAGE_TAG
+  value: bc-dev
 

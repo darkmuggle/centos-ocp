@@ -9,33 +9,23 @@ metadata:
   name: COSA-Pod-ephemeral
 objects:
 
+
+# Create the Service Account for COSA
 - apiVersion: v1
   kind: ServiceAccount
   metadata:
     annotations:
-       serviceacounts.coreos.com/account: 'secrets'
+      coreos-assembler.coreos.com/type: "service account"
     name: ${SA}
+  name: ${SA}
 
-- apiVersion: authorization.openshift.io/v1
-  kind: Role
-  metadata:
-    name: ${SA}_Secrets
-  rules:
-  - apiGroups:
-    - ""
-    resources:
-    - secrets
-    verbs:
-    - watch
-    - get
-    - list
-
-- apiVersion: v1
-  groupNames: null
+- apiVersion: rbac.authorization.k8s.io/v1
   kind: RoleBinding
   metadata:
-    name: ${SA}_Secrets
+    name: coreos-builder-editor-0
   roleRef:
+    apiGroup: rbac.authorization.k8s.io
+    kind: ClusterRole
     name: edit
   subjects:
   - kind: ServiceAccount
@@ -78,10 +68,10 @@ objects:
           tty: true
           resources:
             limits:
-              memory: "4Gi"
+              memory: "1Gi"
               cpu: "2000m"
             requests:
-              memory: "4Gi"
+              memory: "1Gi"
               cpu: "2000m"
           volumeMounts:
           - mountPath: /srv
@@ -98,7 +88,7 @@ objects:
           runAsUser: 0
           runAsGroup: 1000
           privileged: true
-        triggers:
+    triggers:
         - type: "ImageChange"
           imageChangeParams:
             automatic: true
@@ -117,7 +107,7 @@ parameters:
 - description: Tag of the COSA image
   displayName: COSA Image Tag to use
   name: IMAGE_TAG
-  value: local-master
+  value: buildconfig-master
 
 - description: Service Account
   name: SA

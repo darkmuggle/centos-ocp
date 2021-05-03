@@ -55,8 +55,8 @@ objects:
       tags:
       - from:
           kind: DockerImage
-          name: 'registry.fedoraproject.org/fedora:32'
-        name: '32'
+          name: 'registry.fedoraproject.org/fedora:33'
+        name: '33'
         referencePolicy:
           type: Source
         importPolicy:
@@ -76,7 +76,7 @@ objects:
         local: true
       tags:
         # import the `master` image just in-case
-        - name: master
+        - name: upstream
           from:
             kind: DockerImage
             name: quay.io/coreos-assembler/coreos-assembler:${REPO_REF}
@@ -118,7 +118,7 @@ objects:
                 value: "TRUE"
           from:
             kind: ImageStreamTag
-            name: ${IMAGE}:${REPO_REF}
+            name: ${IMAGE}:upstream
         dockerfilePath: ocp/Dockerfile.buildconfig
         type: Docker
       triggers:
@@ -127,4 +127,50 @@ objects:
           imageChange:
               from:
                 kind: "ImageStreamTag"
-                name: ${IMAGE}:${REPO_REF}
+                name: coreos-assembler:upstream
+
+  ### Dev Image
+  - apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      labels:
+        app: ${IMAGE}
+      name: ${IMAGE}-bc-dev
+    spec:
+      # kill the build after 3hrs
+      completionDeadlineSeconds: 13200
+      lookupPolicy:
+        local: true
+      output:
+        to:
+          kind: ImageStreamTag
+          name: ${IMAGE}:bc-dev
+      postCommit: {}
+      runPolicy: Serial
+      source:
+        git:
+          ref: "${REPO_REF}"
+          uri: "${REPO_URL}"
+        type: Git
+      strategy:
+        dockerStrategy:
+          dockerfilePath: ocp/Dockerfile.dev
+          env:
+              - name: GIT_URL
+                value: "https://github.com/darkmuggle/coreos-assembler"
+              - name: GIT_REF
+                value: "dev"
+              - name: OPENSHIFT_GIT_HACK
+                value: "TRUE"
+          from:
+            kind: ImageStreamTag
+            name: ${IMAGE}:${REPO_REF}
+        dockerfilePath: ocp/Dockerfile.dev
+        type: Docker
+      triggers:
+        - type: ConfigChange
+        - type: "ImageChange"
+          imageChange:
+              from:
+                kind: "ImageStreamTag"
+                name: coreos-assembler:upstream
