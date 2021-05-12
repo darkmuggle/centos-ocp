@@ -39,7 +39,7 @@ objects:
           dockerfilePath: Dockerfile.cosa-podder
           from:
             kind: ImageStreamTag
-            name: coreos-assembler:master
+            name: coreos-assembler:main
         type: Docker
         dockerfilePath: Dockerfile.cosa-podder
       triggers:
@@ -48,4 +48,4 @@ objects:
           imageChange:
               from:
                 kind: "ImageStreamTag"
-                name: coreos-assembler:master
+                name: coreos-assembler:main

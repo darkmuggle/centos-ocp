@@ -1,12 +1,12 @@
 apiVersion: template.openshift.io/v1
 kind: Template
 labels:
-  app: COSA-Pod-ephemeral
-  template: COSA-Pod-ephemeral-template
+  app: cosa-pod-ephemeral
+  template: cosa-pod-ephemeral-template
 metadata:
   annotations:
     openshift.io/display-name: COSA Pod (Ephemeral)
-  name: COSA-Pod-ephemeral
+  name: cosa-pod-ephemeral
 objects:
 
 
@@ -107,7 +107,7 @@ parameters:
 - description: Tag of the COSA image
   displayName: COSA Image Tag to use
   name: IMAGE_TAG
-  value: buildconfig-master
+  value: buildconfig-main
 
 - description: Service Account
   name: SA
