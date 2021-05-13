@@ -79,7 +79,13 @@ objects:
         - name: upstream
           from:
             kind: DockerImage
-            name: quay.io/coreos-assembler/coreos-assembler:${REPO_REF}
+            name: quay.io/coreos-assembler/coreos-assembler:main
+          importPolicy:
+            scheduled: true
+        - name: "4.8"
+          from:
+            kind: DockerImage
+            name: quay.io/coreos-assembler/coreos-assembler:4.8
           importPolicy:
             scheduled: true
 
